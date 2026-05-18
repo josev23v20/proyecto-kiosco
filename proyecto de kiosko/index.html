@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Kiosko Virtual</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Conectar CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<header>
+  <h1>@Tiendita_a_buen_precio.online</h1>
+</header>
+<div class="menu">
+  <div class="hamburguesa" onclick="toggleMenu()">☰</div>
+  
+  <div id="menu-opciones" class="menu-opciones">
+    <a href="golosinas.html">🍫 Golosinas</a>
+    <a href="bebidas.html">🥤 Bebidas</a>
+    <a href="galletas.html">🍪 Galletas</a>
+  </div>
+</div>
+<div class="carrito">
+  <h3>🛒 Carrito</h3>
+  <ul id="lista-carrito"></ul>
+  <p><strong>Total: $<span id="total">0</span></strong></p>
+</div>
+
+<section class="productos">
+
+  <div class="producto">
+    <img src="carpetas de imagenes/OIP (1).webp" alt="">
+    <h3>donsatur</h3>
+    <p>$1200</p>
+    <button onclick="agregar('Galletitas', 1200)">Agregar</button>
+  </div>
+
+  <div class="producto">
+    <img src="carpetas de imagenes/OIP.webp" alt="">
+    <h3>placer</h3>
+    <p>$1000</p>
+    <button onclick="agregar('Gaseosa', 1000)">Agregar</button>
+  </div>
+
+  <div class="producto">
+    <img src="carpetas de imagenes/OIP (2).webp" alt="">
+    <h3>biscochuelo</h3>
+    <p>$1000</p>
+    <button onclick="agregar('Chocolate', 1000)">Agregar</button>
+  </div>
+
+</section>
+
+
+</body>
+<!-- Conectar JS -->
+<script src="javascrip.js"></script>
+
+</html>
