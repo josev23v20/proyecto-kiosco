@@ -1,0 +1,948 @@
+
+
+    html:
+    
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tiendita buen precio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="tema-claro">
+
+<!-- LOGIN -->
+
+<!-- CONTENIDO -->
+<div id="contenido" style="display:none;">
+
+<nav class="navbar navbar-light bg-light shadow">
+
+  <div class="container-fluid">
+
+    <!-- BOTON HAMBURGUESA -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuOpciones">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+ 
+ 
+<nav>
+    <button onclick="cerrarSesion()">
+        Cerrar Sesión
+    </button>
+</nav>
+
+    <!-- TITULO -->
+    <span class="navbar-brand mx-auto">🧃 Tiendita buen precio</span>
+
+  </div>
+</nav>
+
+<!-- MENU DESPLEGABLE -->
+<div class="collapse" id="menuOpciones">
+  <div class="bg-light p-3">
+
+    <h5>Filtros</h5>
+
+    <button class="btn btn-outline-primary w-100 mb-2" onclick="filtrarCategoria('todos')">
+      Todos
+    </button>
+
+    <button class="btn btn-outline-success w-100 mb-2" onclick="filtrarCategoria('snack')">
+      Snacks
+    </button>
+
+    <button class="btn btn-outline-warning w-100 mb-2" onclick="filtrarCategoria('bebida')">
+      Bebidas
+    </button>
+
+    <button class="btn btn-outline-danger w-100 mb-2" onclick="filtrarCategoria('dulce')">
+      Dulces
+    </button>
+
+    <hr>
+
+    <input type="text" id="buscador" class="form-control" placeholder="Buscar..." onkeyup="filtrarProductos()">
+
+  </div>
+</div>
+
+<!-- CARRITO -->
+<div class="carrito-fijo card">
+  <div class="card-body">
+    <h5>🛒 Carrito</h5>
+    <ul id="lista-carrito"></ul>
+    <p>Total: $<span id="total">0</span></p>
+    <button class="btn btn-success w-100" onclick="finalizarCompra()">Comprar</button>
+  </div>
+</div>
+
+<div class="container mt-4">
+
+  <div class="row" id="contenedor-productos">
+
+    <!-- PRODUCTO -->
+    <div class="col-md-4 producto" data-categoria="snack">
+      <div class="card producto-card">
+        <img src="carpetas de imagenes/OIP (1).webp" class="card-img-top">
+        <div class="card-body text-center">
+          <h5>Galletitas</h5>
+          <p class="precio">$1200</p>
+          <p class="stock-label stock-Galletitas"></p>
+          <button class="btn btn-outline-dark" onclick="verProducto('Galletitas',1200)">Ver</button>
+          <button class="btn btn-danger w-100" onclick="agregar('Galletitas',1200)">Agregar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 producto" data-categoria="bebida">
+      <div class="card producto-card">
+        <img src="carpetas de imagenes/OIP.webp" class="card-img-top">
+        <div class="card-body text-center">
+          <h5>Gaseosa</h5>
+          <p class="precio">$1000</p>
+          <p class="stock-label stock-Gaseosa"></p>
+          <button class="btn btn-outline-dark" onclick="verProducto('Gaseosa',1000)">Ver</button>
+          <button class="btn btn-danger w-100" onclick="agregar('Gaseosa',1000)">Agregar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 producto" data-categoria="dulce">
+      <div class="card producto-card">
+        <img src="carpetas de imagenes/OIP (9).webp" class="card-img-top">
+        <div class="card-body text-center">
+          <h5>Chocolate</h5>
+          <p class="precio">$1000</p>
+          <p class="stock-label stock-Chocolate"></p>
+          <button class="btn btn-outline-dark" onclick="verProducto('Chocolate',1000)">Ver</button>
+          <button class="btn btn-danger w-100" onclick="agregar('Chocolate',1000)">Agregar</button>
+        </div>
+      </div>
+    </div>
+<!-- PRODUCTO -->
+    <div class="col-md-4 producto" data-categoria="snack">
+      <div class="card producto-card">
+        <img src="carpetas de imagenes/descarga (1).webp" class="card-img-top">
+        <div class="card-body text-center">
+          <h5>Galletitas</h5>
+          <p class="precio">$1200</p>
+          <p class="stock-label stock-Galletitas"></p>
+          <button class="btn btn-outline-dark" onclick="verProducto('Galletitas',1200)">Ver</button>
+          <button class="btn btn-danger w-100" onclick="agregar('Galletitas',1200)">Agregar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 producto" data-categoria="bebida">
+      <div class="card producto-card">
+        <img src="carpetas de imagenes/descarga (3).webp" class="card-img-top">
+        <div class="card-body text-center">
+          <h5>Gaseosa</h5>
+          <p class="precio">$1000</p>
+          <p class="stock-label stock-Gaseosa"></p>
+          <button class="btn btn-outline-dark" onclick="verProducto('Gaseosa',1000)">Ver</button>
+          <button class="btn btn-danger w-100" onclick="agregar('Gaseosa',1000)">Agregar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 producto" data-categoria="dulce">
+      <div class="card producto-card">
+        <img src="carpetas de imagenes/OIP (8).webp" class="card-img-top">
+        <div class="card-body text-center">
+          <h5>Chocolate</h5>
+          <p class="precio">$1000</p>
+          <p class="stock-label stock-Chocolate"></p>
+          <button class="btn btn-outline-dark" onclick="verProducto('Chocolate',1000)">Ver</button>
+          <button class="btn btn-danger w-100" onclick="agregar('Chocolate',1000)">Agregar</button>
+        </div>
+      </div>
+    </div>
+<!-- PRODUCTO -->
+    <div class="col-md-4 producto" data-categoria="snack">
+      <div class="card producto-card">
+        <img src="carpetas de imagenes/descarga.webp" class="card-img-top">
+        <div class="card-body text-center">
+          <h5>Galletitas</h5>
+          <p class="precio">$1200</p>
+          <p class="stock-label stock-Galletitas"></p>
+          <button class="btn btn-outline-dark" onclick="verProducto('Galletitas',1200)">Ver</button>
+          <button class="btn btn-danger w-100" onclick="agregar('Galletitas',1200)">Agregar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 producto" data-categoria="bebida">
+      <div class="card producto-card">
+        <img src="carpetas de imagenes/OIP (5).webp" class="card-img-top">
+        <div class="card-body text-center">
+          <h5>Gaseosa</h5>
+          <p class="precio">$1000</p>
+          <p class="stock-label stock-Gaseosa"></p>
+          <button class="btn btn-outline-dark" onclick="verProducto('Gaseosa',1000)">Ver</button>
+          <button class="btn btn-danger w-100" onclick="agregar('Gaseosa',1000)">Agregar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 producto" data-categoria="dulce">
+      <div class="card producto-card">
+        <img src="carpetas de imagenes/OIP (7).webp" class="card-img-top">
+        <div class="card-body text-center">
+          <h5>Chocolate</h5>
+          <p class="precio">$1000</p>
+          <p class="stock-label stock-Chocolate"></p>
+          <button class="btn btn-outline-dark" onclick="verProducto('Chocolate',1000)">Ver</button>
+          <button class="btn btn-danger w-100" onclick="agregar('Chocolate',1000)">Agregar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="modalProducto">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 id="tituloProducto"></h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p id="precioProducto"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" onclick="agregarDesdeModal()">Agregar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTON MERCADO NEGRO -->
+<div class="text-center mt-5 mb-3" id="zona-boton">
+  <button class="btn btn-dark" onclick="mercadoNegro()">☠ Mercado Negro</button>
+</div>
+
+<!-- SONIDO -->
+<audio id="sonidoSecreto" src="https://www.myinstants.com/media/sounds/vine-boom.mp3"></audio>
+
+<script src="javascrip.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+
+
+  </body>
+</html> 
+
+
+_______________________________________________________________________________________________________
+
+    css:
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #1f2937;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 55%, #ffffff 100%);
+}
+
+/*
+body::before {
+ content: ""; 
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 30%),
+              radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.14), transparent 28%);
+  pointer-events: none;
+  z-index: -1;
+}
+*/
+
+nav.navbar {
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.navbar-brand {
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.02em;
+}
+
+.navbar-toggler {
+  border: none;
+}
+
+.navbar-toggler-icon {
+  filter: invert(0);
+}
+
+#menuOpciones {
+  min-width: 260px;
+}
+
+#menuOpciones .bg-light {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+}
+
+#menuOpciones h5 {
+  margin-bottom: 1rem;
+
+  font-weight: 700;
+  color: #111827;
+}
+
+#menuOpciones .form-control {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+}
+
+#menuOpciones .btn {
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  font-weight: 600;
+}
+
+.carrito-fijo {
+  position: fixed;
+  top: 110px;
+  right: 18px;
+  width: 280px;
+  z-index: 1000;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.16);
+}
+
+.carrito-fijo .card-body {
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98));
+}
+
+.carrito-fijo h5 {
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.carrito-fijo p {
+  font-size: 0.95rem;
+  color: #1e293b;
+}
+
+.producto-card {
+  background: #ffffff;
+  border: none;
+  border-radius: 28px;
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.producto-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 32px 85px rgba(15, 23, 42, 0.14);
+}
+
+.producto-card img {
+  height: 220px;
+  object-fit: cover;
+}
+
+.producto-card .card-body {
+  padding: 1.4rem 1.2rem;
+}
+
+.producto-card h5 {
+  font-weight: 700;
+  margin-bottom: 0.65rem;
+}
+
+.precio {
+  color: #0f766e;
+  font-weight: 700;
+  margin-bottom: 0.9rem;
+}
+
+.stock-label {
+  font-size: 0.95rem;
+  color: #475569;
+  margin-bottom: 1rem;
+}
+
+.btn-reponer {
+  background: #475569;
+  color: #ffffff;
+  border: none;
+  border-radius: 16px;
+}
+
+.btn-reponer:hover,
+.btn-reponer:focus {
+  background: #334155;
+}
+
+.btn-danger,
+.btn-outline-danger,
+.btn-outline-success,
+.btn-outline-warning,
+.btn-outline-primary,
+.btn-outline-dark {
+  border-radius: 16px;
+}
+
+input {
+  border-radius: 14px;
+}
+
+.fade {
+  animation: fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn {
+  from {opacity: 0; transform: translateY(10px);}
+  to {opacity: 1; transform: translateY(0);}
+}
+
+.tema-claro {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.tema-oscuro {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+.tema-oscuro .card {
+  background: #111827 !important;
+  color: #e2e8f0 !important;
+}
+
+.tema-oscuro .precio {
+  color: #38bdf8;
+}
+
+@media (max-width: 992px) {
+  .carrito-fijo {
+    position: static;
+    width: 100%;
+    margin-top: 1rem;
+  }
+}
+
+_________________________________________________________________________________________________
+
+      js:
+
+
+let total = 0; /*nose */
+
+let minimo = 2000;
+
+let productoActual = "";
+
+let precioActual = 0;
+
+let usuarios = JSON.parse(localStorage.getItem("usuarios")) || {
+    "admin": { password: "1234", curso: "", rol: "admin" }
+};
+
+function guardarUsuarios(){
+    localStorage.setItem(
+        "usuarios",
+        JSON.stringify(usuarios)
+    );
+}
+
+guardarUsuarios();
+
+/* STOCK */
+
+let stock = JSON.parse(localStorage.getItem("stock")) || {
+
+    "Galletitas":5,
+    "Gaseosa":5,
+    "Chocolate":5
+
+};
+
+
+function cerrarSesion() {
+    /*
+    window.addEventListener("pageshow", function(event) {
+       if (!localStorage.getItem("usuarioLogueado")) {
+           window.location.replace("login.html");
+       }
+    });
+    */
+
+    localStorage.removeItem("usuarioLogueado");
+
+    alert("Sesión cerrada correctamente");
+    
+    window.location.replace("login.html");
+
+  //  window.location.href = "login.html";
+
+}
+
+
+
+/* ACTUALIZAR STOCK */
+
+function actualizarStock(){
+
+    for(let p in stock){
+
+        document.querySelectorAll(".stock-" + p)
+        .forEach(el => {
+
+            el.textContent =
+            stock[p] > 0
+            ? "Stock: " + stock[p]
+            : "SIN STOCK";
+
+        });
+
+    }
+
+}
+
+/* GUARDAR STOCK */
+
+function guardarStock(){
+
+    localStorage.setItem(
+    "stock",
+    JSON.stringify(stock)
+    );
+
+}
+
+/* AGREGAR */
+
+function agregar(nombre,precio){
+
+    if(stock[nombre] <= 0){
+
+        alert("Sin stock");
+
+        return;
+
+    }
+
+    let lista =
+    document.getElementById("lista-carrito");
+
+    let item =
+    document.createElement("li");
+
+    item.textContent =
+    nombre + " - $" + precio;
+
+    lista.appendChild(item);
+
+    total += precio;
+
+    document.getElementById("total")
+    .textContent = total;
+
+    stock[nombre]--;
+
+    guardarStock();
+
+    actualizarStock();
+
+}
+
+/* VER PRODUCTO */
+
+function verProducto(nombre,precio){
+
+    productoActual = nombre;
+
+    precioActual = precio;
+
+    document.getElementById("tituloProducto")
+    .textContent = nombre;
+
+    document.getElementById("precioProducto")
+    .textContent = "Precio: $" + precio;
+
+    let stockEl = document.getElementById("stockProducto");
+    if(stockEl){
+        stockEl.textContent =
+            stock[nombre] > 0
+            ? "Stock: " + stock[nombre]
+            : "SIN STOCK";
+    }
+
+    new bootstrap.Modal(
+    document.getElementById("modalProducto")
+    ).show();
+
+}
+
+/* AGREGAR MODAL */
+
+function agregarDesdeModal(){
+
+    agregar(productoActual,precioActual);
+
+}
+
+/* FINALIZAR */
+
+function finalizarCompra(){
+
+    if(total < minimo){
+
+        alert("Pedido mínimo $" + minimo);
+
+        return;
+
+    }
+
+    let numero =
+    "PED-" + Math.floor(Math.random()*100000);
+
+    alert("Pedido realizado: " + numero);
+
+    document.getElementById("lista-carrito")
+    .innerHTML = "";
+
+    total = 0;
+
+    document.getElementById("total")
+    .textContent = total;
+
+}
+
+/* FILTROS */
+
+function filtrarCategoria(cat){
+
+    document.querySelectorAll(".producto")
+    .forEach(p => {
+
+        p.style.display =
+        (cat === "todos" ||
+        p.dataset.categoria === cat)
+        ? "block"
+        : "none";
+
+    });
+
+}
+
+function filtrarProductos(){
+
+    let texto =
+    document.getElementById("buscador")
+    .value
+    .toLowerCase();
+
+    document.querySelectorAll(".producto")
+    .forEach(p => {
+
+        p.style.display =
+        p.innerText.toLowerCase()
+        .includes(texto)
+        ? "block"
+        : "none";
+
+    });
+
+}
+
+/* ================= LOGIN ================= */
+
+function login(){
+
+    let nombre =
+    document.getElementById("nombre").value.trim();
+
+    let password =
+    document.getElementById("password").value;
+
+    let curso =
+    document.getElementById("curso").value;
+
+    // VALIDACION
+    if(
+        nombre === "" ||
+        password === "" ||
+        curso === ""
+    ){
+
+        alert("Completá todos los campos");
+
+        return;
+
+    }
+
+    let usuario = usuarios[nombre];
+    if(!usuario){
+        alert("Usuario no registrado. Usa Registrarse para crear tu cuenta.");
+        return;
+    }
+
+    if(usuario.password !== password){
+        alert("Contraseña incorrecta");
+        return;
+    }
+
+    usuario.curso = curso;
+    guardarUsuarios();
+
+    let rol = usuario.rol || "usuario";
+
+    localStorage.setItem(
+    "nombre",
+    nombre
+    );
+
+    localStorage.setItem(
+    "curso",
+    curso
+    );
+
+    localStorage.setItem(
+    "rol",
+    rol
+    );
+
+    mostrarUsuario();
+
+}
+
+function registrarse(){
+    let nombre =
+    document.getElementById("nombre").value.trim();
+
+    let password =
+    document.getElementById("password").value;
+
+    let passwordConfirm =
+    document.getElementById("passwordConfirm").value;
+
+    let curso =
+    document.getElementById("curso").value;
+
+    if(
+        nombre === "" ||
+        password === "" ||
+        passwordConfirm === "" ||
+        curso === ""
+    ){
+
+        alert("Completá todos los campos para registrarte");
+        return;
+
+    }
+
+    if(password !== passwordConfirm){
+        alert("Las contraseñas no coinciden. Por favor, verificá ambas.");
+        return;
+    }
+
+    if(usuarios[nombre]){
+        alert("Ese usuario ya existe. Iniciá sesión o elige otro nombre.");
+        return;
+    }
+
+    usuarios[nombre] = {
+        password: password,
+        curso: curso,
+        rol: "usuario"
+    };
+
+    guardarUsuarios();
+
+    localStorage.setItem(
+    "nombre",
+    nombre
+    );
+
+    localStorage.setItem(
+    "curso",
+    curso
+    );
+
+    localStorage.setItem(
+    "rol",
+    "usuario"
+    );
+
+    mostrarUsuario();
+}
+
+/* ================= MOSTRAR USUARIO ================= */
+
+function mostrarUsuario(){
+
+    let nombre =
+    localStorage.getItem("nombre");
+
+    let curso =
+    localStorage.getItem("curso");
+
+    let rol =
+    localStorage.getItem("rol");
+
+    if(nombre){
+
+        let loginBoxEl = document.getElementById("loginBox");
+        if(loginBoxEl){
+            loginBoxEl.innerHTML = `
+
+            <div class="alert alert-success shadow">
+
+            <h4>
+            Bienvenido ${nombre}
+            </h4>
+
+            <p>
+            Curso: ${curso}
+            </p>
+
+            <p>
+            Rol: ${rol}
+            </p>
+
+            <button
+            class="btn btn-danger"
+            onclick="logout()">
+
+            Cerrar sesión
+
+            </button>
+
+            </div>
+
+            `;
+
+            loginBoxEl.style.display = "none";
+        }
+
+        let contenido = document.getElementById("contenido");
+        if(contenido){
+            contenido.style.display = "block";
+        }
+
+        let userStatus = document.getElementById("userStatus");
+        if(userStatus){
+            userStatus.innerHTML = `
+              <div class="alert alert-dark shadow-sm d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
+                <div>
+                  <strong>Cuenta activa:</strong> ${nombre} <span class="text-muted">(${curso})</span>
+                </div>
+                <button class="btn btn-outline-light btn-sm mt-3 mt-md-0" onclick="logout()">Cerrar sesión</button>
+              </div>
+            `;
+        }
+
+        // SI ES ADMIN
+        if(rol === "admin"){
+
+            mostrarBotonesReponerAdmin();
+
+        }
+
+    }
+
+}
+
+/* ================= LOGOUT ================= */
+
+function logout(){
+
+    localStorage.removeItem("nombre");
+
+    localStorage.removeItem("curso");
+
+    localStorage.removeItem("rol");
+
+    location.reload();
+
+}
+
+/* ================= MODO ADMIN ================= */
+
+function mostrarBotonesReponerAdmin(){
+    document.querySelectorAll(".producto").forEach(card => {
+        if (card.querySelector(".btn-reponer")) return;
+
+        let nombre = card.querySelector("h5").innerText.trim();
+        let footer = card.querySelector(".card-body");
+
+        let boton = document.createElement("button");
+        boton.type = "button";
+        boton.className = "btn btn-secondary btn-sm w-100 mt-2 btn-reponer";
+        boton.textContent = "Reponer";
+        boton.onclick = () => reponerProducto(nombre);
+
+        footer.appendChild(boton);
+    });
+}
+
+function reponerProducto(nombre){
+    let cantidad = prompt("Ingrese nueva cantidad de stock para " + nombre + ":", stock[nombre]);
+    if(cantidad === null){
+        return;
+    }
+
+    cantidad = parseInt(cantidad, 10);
+    if(isNaN(cantidad) || cantidad < 0){
+        alert("Ingresa una cantidad válida de stock.");
+        return;
+    }
+
+    stock[nombre] = cantidad;
+    guardarStock();
+    actualizarStock();
+
+    let mensaje = "Stock de " + nombre + " actualizado a " + cantidad + " unidades.";
+    alert(mensaje);
+}
+
+/* ================= MODO ADMIN ================= */
+
+function activarModoAdmin(){
+
+    document.body.style.border =
+    "5px solid red";
+
+    alert("Modo admin activado");
+
+}
+
+/* MERCADO NEGRO */
+
+function mercadoNegro(){
+    window.location.href = "mercado.html";
+}
+
+/* INICIO */
+
+actualizarStock();
+
+mostrarUsuario();
+
+
+

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mercado Negro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body.tema-oscuro {
+      background: radial-gradient(circle at top, #090a0f 0%, #111827 52%, #0b1120 100%);
+      color: #e2e8f0;
+    }
+    body.tema-oscuro .navbar {
+      background: rgba(15, 23, 42, 0.96) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    }
+    body.tema-oscuro .producto-card {
+      background: #111827 !important;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      box-shadow: 0 20px 55px rgba(15, 23, 42, 0.22);
+    }
+    body.tema-oscuro .producto-card .card-body {
+      color: #e2e8f0;
+    }
+    body.tema-oscuro .card.bg-dark {
+      background: #0f172a !important;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+    }
+    body.tema-oscuro .btn-outline-light {
+      color: #f8fafc;
+      border-color: rgba(248, 250, 252, 0.32);
+    }
+    body.tema-oscuro .btn-outline-light:hover,
+    body.tema-oscuro .btn-outline-light:focus {
+      background: rgba(248, 250, 252, 0.08);
+    }
+    body.tema-oscuro .btn-danger {
+      background: #dc2626 !important;
+      border-color: #dc2626 !important;
+    }
+    body.tema-oscuro .btn-danger:hover {
+      background: #b91c1c !important;
+    }
+    body.tema-oscuro .stock-label {
+      color: #cbd5e1;
+    }
+    body.tema-oscuro .precio {
+      color: #38bdf8 !important;
+    }
+    body.tema-oscuro .badge.bg-secondary {
+      background: rgba(148, 163, 184, 0.22) !important;
+    }
+    body.tema-oscuro .navbar-brand {
+      color: rgba(255, 255, 255, 0.88);
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+    body.tema-oscuro .navbar-brand:hover {
+      color: #ffffff;
+      transform: scale(1.02);
+    }
+  </style>
+</head>
+<body class="tema-oscuro">
+
+<div id="loginBox" style="display:none;"></div>
+
+<nav class="navbar navbar-dark bg-black shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand mx-auto">☠ Mercado Negro</a>
+  </div>
+</nav>
+
+<div class="container mt-4">
+  <div id="userStatus"></div>
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <div class="card bg-dark text-white border-0 shadow-lg p-4 rounded-4">
+        <h3 class="mb-3">Bienvenido al Mercado Negro donde tendremos productos y comidas donde en la eset no dejen vender 😉👍</h3>
+         <!-- Descripción-->
+        <div class="mt-3">
+          <span class="badge bg-white text-dark me-2">Exclusivo, con Pre pedido</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+      <a href="index.html" class="btn btn-outline-light btn-lg">← Volver a la Tiendita</a>
+    </div>
+  </div>
+
+  <div class="row" id="contenedor-productos">
+
+    <div class="col-md-4 producto" data-categoria="snack">
+      <div class="card producto-card border-0 bg-black text-white">
+        <img src="carpeta de imagenes del mercado nigga/OIP.webp">
+        <div class="card-body text-center">
+          <h5>tortilla</h5>
+          <p class="precio text-white">$1200</p>
+          <p class="stock-label stock-Galletitas"></p>
+          <button class="btn btn-outline-light" onclick="verProducto('Galletitas',1200)">Ver</button>
+          <button class="btn btn-danger w-100 mt-2" onclick="agregar('Galletitas',1200)">Agregar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 producto" data-categoria="bebida">
+      <div class="card producto-card border-0 bg-black text-white">
+        <img src="carpeta de imagenes del mercado nigga/OIP (1).webp" class="card-img-top">
+        <div class="card-body text-center">
+          <h5>saquitos de cafe</h5>
+          <p class="precio text-white">$800</p>
+          <p class="stock-label stock-Gaseosa"></p>
+          <button class="btn btn-outline-light" onclick="verProducto('Gaseosa',1000)">Ver</button>
+          <button class="btn btn-danger w-100 mt-2" onclick="agregar('Gaseosa',1000)">Agregar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 producto" data-categoria="dulce">
+      <div class="card producto-card border-0 bg-black text-white">
+        <img src="carpeta de imagenes del mercado nigga/descarga.webp" class="card-img-top">
+        <div class="card-body text-center">
+          <h5>pebetes</h5>
+          <p class="precio text-white">$1500</p>
+          <p class="stock-label stock-Chocolate"></p>
+          <button class="btn btn-outline-light" onclick="verProducto('Chocolate',1000)">Ver</button>
+          <button class="btn btn-danger w-100 mt-2" onclick="agregar('Chocolate',1000)">Agregar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="modalProducto">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 id="tituloProducto"></h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p id="precioProducto" class="text-dark fw-semibold"></p>
+        <p id="stockProducto" class="text-dark"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" onclick="agregarDesdeModal()">Agregar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="javascrip.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
