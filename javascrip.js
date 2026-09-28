@@ -8,6 +8,26 @@ let productoActual = "";
 
 let precioActual = 0;
 
+let stock = JSON.parse(localStorage.getItem("stock") || "null") || {
+    Galletitas: 10,
+    Gaseosa: 10,
+    Chocolate: 10,
+    baggio: 10,
+    alfajor: 10,
+    Alfajor: 10
+};
+
+let usuarios = JSON.parse(localStorage.getItem("usuarios") || "null") || {};
+
+if (!usuarios.admin) {
+    usuarios.admin = {
+        password: "1234",
+        curso: "",
+        rol: "admin"
+    };
+    localStorage.setItem("usuarios", JSON.stringify(usuarios));
+}
+
 /* ================= CONTROL DE ACCESO Y MOSTRAR USUARIO ================= */
 
 function mostrarUsuario(){
@@ -15,42 +35,44 @@ function mostrarUsuario(){
     let curso = localStorage.getItem("curso");
     let rol = localStorage.getItem("rol");
 
-    // Revisa si la URL actual contiene "login"
     let enPaginaLogin = window.location.href.toLowerCase().includes("login");
 
-    // 1. Si NO hay usuario y NO estamos en la página de login -> ir al login
     if (!nombre && !enPaginaLogin) {
         window.location.href = "login.html";
         return;
     }
 
-    // 2. Si SI hay usuario y estamos en la página de login -> ir a la tienda
     if (nombre && enPaginaLogin) {
         window.location.href = "index.html";
         return;
     }
 
-    // 3. Mostrar el contenido de la tienda si estamos en index.html
-    let contenido = document.getElementById("contenido");
-    if (contenido && nombre) {
-        contenido.style.display = "block";
-    }
+    if (nombre) {
+        let loginBoxEl = document.getElementById("login_Box");
+        if (loginBoxEl) {
+            loginBoxEl.style.display = "none";
+        }
 
-    // 4. Actualizar barra de estado del usuario
-    let userStatus = document.getElementById("userStatus");
-    if (userStatus && nombre) {
-        userStatus.innerHTML = `
-          <div class="alert alert-dark shadow-sm d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
-            <div>
-              <strong>Cuenta activa:</strong> ${nombre} <span class="text-muted">(${curso})</span>
-            </div>
-            <button class="btn btn-outline-light btn-sm mt-3 mt-md-0" onclick="cerrarSesion()">Cerrar sesión</button>
-          </div>
-        `;
-    }
+        let contenido = document.getElementById("contenido");
+        if (contenido) {
+            contenido.style.display = "block";
+        }
 
-    if (rol === "admin") {
-        mostrarBotonesReponerAdmin();
+        let userStatus = document.getElementById("userStatus");
+        if (userStatus) {
+            userStatus.innerHTML = `
+              <div class="alert alert-dark shadow-sm d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
+                <div>
+                  <strong>Cuenta activa:</strong> ${nombre} <span class="text-muted">(${curso})</span>
+                </div>
+                <button class="btn btn-outline-light btn-sm mt-3 mt-md-0" onclick="logout()">Cerrar sesión</button>
+              </div>
+            `;
+        }
+
+        if (rol === "admin") {
+            mostrarBotonesReponerAdmin();
+        }
     }
 }
 
@@ -85,6 +107,10 @@ function guardarStock(){
 
 
     
+}
+
+function guardarUsuarios(){
+    localStorage.setItem("usuarios", JSON.stringify(usuarios));
 }
 
 /* AGREGAR */
@@ -353,82 +379,6 @@ function registrarse(){
     );
 
     mostrarUsuario();
-}
-
-/* ================= MOSTRAR USUARIO ================= */
-
-function mostrarUsuario(){
-
-    let nombre =
-    localStorage.getItem("nombre");
-
-    let curso =
-    localStorage.getItem("curso");
-
-    let rol =
-    localStorage.getItem("rol");
-
-    if(nombre){
-
-        let loginBoxEl = document.getElementById("login_Box");
-        if(loginBoxEl){
-            loginBoxEl.innerHTML = `
-
-            <div class="alert alert-success shadow">
-
-            <h4>
-            Bienvenido ${nombre}
-            </h4>
-
-            <p>
-            Curso: ${curso}
-            </p>
-
-            <p>
-            Rol: ${rol}
-            </p>
-
-            <button
-            class="btn btn-danger"
-            onclick="logout()">
-
-            Cerrar sesión
-
-            </button>
-
-            </div>
-
-            `;
-
-            loginBoxEl.style.display = "none";
-        }
-
-        let contenido = document.getElementById("contenido");
-        if(contenido){
-            contenido.style.display = "block";
-        }
-
-        let userStatus = document.getElementById("userStatus");
-        if(userStatus){
-            userStatus.innerHTML = `
-              <div class="alert alert-dark shadow-sm d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
-                <div>
-                  <strong>Cuenta activa:</strong> ${nombre} <span class="text-muted">(${curso})</span>
-                </div>
-                <button class="btn btn-outline-light btn-sm mt-3 mt-md-0" onclick="logout()">Cerrar sesión</button>
-              </div>
-            `;
-        }
-
-        // SI ES ADMIN
-        if(rol === "admin"){
-
-            mostrarBotonesReponerAdmin();
-
-        }
-
-    }
-
 }
 
 /* ================= LOGOUT ================= */
