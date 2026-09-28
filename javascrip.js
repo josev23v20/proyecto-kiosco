@@ -8,50 +8,51 @@ let productoActual = "";
 
 let precioActual = 0;
 
-let usuarios = JSON.parse(localStorage.getItem("usuarios")) || {
-    "admin": { password: "1234", curso: "", rol: "admin" }
-};
+/* ================= CONTROL DE ACCESO Y MOSTRAR USUARIO ================= */
 
-function guardarUsuarios(){
-    localStorage.setItem(
-        "usuarios",
-        JSON.stringify(usuarios)
-    );
+function mostrarUsuario(){
+    let nombre = localStorage.getItem("nombre");
+    let curso = localStorage.getItem("curso");
+    let rol = localStorage.getItem("rol");
+
+    // Revisa si la URL actual contiene "login"
+    let enPaginaLogin = window.location.href.toLowerCase().includes("login");
+
+    // 1. Si NO hay usuario y NO estamos en la página de login -> ir al login
+    if (!nombre && !enPaginaLogin) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    // 2. Si SI hay usuario y estamos en la página de login -> ir a la tienda
+    if (nombre && enPaginaLogin) {
+        window.location.href = "index.html";
+        return;
+    }
+
+    // 3. Mostrar el contenido de la tienda si estamos en index.html
+    let contenido = document.getElementById("contenido");
+    if (contenido && nombre) {
+        contenido.style.display = "block";
+    }
+
+    // 4. Actualizar barra de estado del usuario
+    let userStatus = document.getElementById("userStatus");
+    if (userStatus && nombre) {
+        userStatus.innerHTML = `
+          <div class="alert alert-dark shadow-sm d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
+            <div>
+              <strong>Cuenta activa:</strong> ${nombre} <span class="text-muted">(${curso})</span>
+            </div>
+            <button class="btn btn-outline-light btn-sm mt-3 mt-md-0" onclick="cerrarSesion()">Cerrar sesión</button>
+          </div>
+        `;
+    }
+
+    if (rol === "admin") {
+        mostrarBotonesReponerAdmin();
+    }
 }
-
-guardarUsuarios();
-
-/* STOCK */
-
-let stock = JSON.parse(localStorage.getItem("stock")) || {
-
-    "Galletitas":5,
-    "Gaseosa":5,
-    "Chocolate":5
-
-};
-
-
-function cerrarSesion() {
-    /*
-    window.addEventListener("pageshow", function(event) {
-       if (!localStorage.getItem("usuarioLogueado")) {
-           window.location.replace("login.html");
-       }
-    });
-    */
-
-    localStorage.removeItem("usuarioLogueado");
-
-    alert("Sesión cerrada correctamente");
-    
-    window.location.replace("login.html");
-
-  //  window.location.href = "login.html";
-
-}
-
-
 
 /* ACTUALIZAR STOCK */
 
@@ -82,6 +83,8 @@ function guardarStock(){
     JSON.stringify(stock)
     );
 
+
+    
 }
 
 /* AGREGAR */
