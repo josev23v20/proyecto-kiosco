@@ -249,6 +249,16 @@ function filtrarProductos(){
 
 }
 
+function obtenerCursoActual(){
+    let cursoInput = document.getElementById("curso");
+    if (!cursoInput) {
+        return "General";
+    }
+
+    let curso = cursoInput.value.trim();
+    return curso !== "" ? curso : "General";
+}
+
 /* ================= LOGIN ================= */
 
 function login(){
@@ -259,14 +269,12 @@ function login(){
     let password =
     document.getElementById("password").value;
 
-    let curso =
-    document.getElementById("curso").value;
+    let curso = obtenerCursoActual();
 
     // VALIDACION
     if(
         nombre === "" ||
-        password === "" ||
-        curso === ""
+        password === ""
     ){
 
         alert("Completá todos los campos");
@@ -328,14 +336,12 @@ function registrarse(){
     let passwordConfirm =
     document.getElementById("passwordConfirm").value;
 
-    let curso =
-    document.getElementById("curso").value;
+    let curso = obtenerCursoActual();
 
     if(
         nombre === "" ||
         password === "" ||
-        passwordConfirm === "" ||
-        curso === ""
+        passwordConfirm === ""
     ){
 
         alert("Completá todos los campos para registrarte");
