@@ -1,4 +1,3 @@
-
 import os
 import random
 from functools import wraps
@@ -24,9 +23,13 @@ if not database_url:
         "Falta DATABASE_URL. Copiá .env.example a .env y completalo "
         "(ver ejemplo dentro de .env.example)."
     )
-# Render entrega "postgres://", SQLAlchemy necesita "postgresql://"
-if database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+# Render entrega "postgres://" y el .env suele tener "postgresql://".
+# Se fuerza el driver psycopg2 (el que instala requirements.txt): sin esto,
+# SQLAlchemy 2.1+ intenta usar "psycopg" (v3) y falla con "No module named 'psycopg'".
+for prefijo in ("postgres://", "postgresql://"):
+    if database_url.startswith(prefijo):
+        database_url = "postgresql+psycopg2://" + database_url[len(prefijo):]
+        break
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -46,9 +49,41 @@ CORS(app, resources={r"/api/*": {"origins": FRONTEND_ORIGIN}})
 db.init_app(app)
 serializer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
-# Crea las tablas si no existen (también corre bajo gunicorn en Render)
+ADMIN_NOMBRE = "admin"
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+
+
+def asegurar_admin():
+    """Crea el usuario 'admin' si no existe y mantiene su contraseña igual a ADMIN_PASSWORD (.env).
+    Para cambiar la contraseña: cambiá el .env y reiniciá el backend."""
+    if not ADMIN_PASSWORD:
+        print("AVISO: falta ADMIN_PASSWORD en .env, no se creó el usuario admin.")
+        return
+
+    try:
+        admin = Usuario.query.filter_by(nombre=ADMIN_NOMBRE).first()
+        if not admin:
+            admin = Usuario(
+                nombre=ADMIN_NOMBRE,
+                password_hash=generate_password_hash(ADMIN_PASSWORD),
+                curso="Administración",
+                rol="admin",
+            )
+            db.session.add(admin)
+        else:
+            admin.rol = "admin"
+            if not check_password_hash(admin.password_hash, ADMIN_PASSWORD):
+                admin.password_hash = generate_password_hash(ADMIN_PASSWORD)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()  # p. ej. dos workers de gunicorn creándolo a la vez
+        print("AVISO: no se pudo crear/actualizar el usuario admin.")
+
+
+# Crea las tablas y el admin al arrancar (también corre bajo gunicorn en Render)
 with app.app_context():
     db.create_all()
+    asegurar_admin()
 
 
 # ================= ERRORES =================
@@ -156,6 +191,8 @@ def registro():
 
     if not nombre or not password or not curso:
         return error("Completá todos los campos")
+    if nombre.lower() == ADMIN_NOMBRE:
+        return error("Ese nombre está reservado", 409)
     if len(nombre) > 60:
         return error("El nombre es demasiado largo (máximo 60 caracteres)")
     if len(curso) > 40:
@@ -431,4 +468,10 @@ def admin_cambiar_imagen(producto_id):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(debug=True, host="0.0.0.0", port=port)
+    # 127.0.0.1 = solo tu PC (no lo bloquea el firewall). Para probar desde otro
+    # dispositivo de la red, poné HOST=0.0.0.0 en el .env.
+    host = os.environ.get("HOST", "127.0.0.1")
+    # use_reloader=False: el reloader abre el socket de otra forma y en algunas PCs
+    # con Windows da "Intento de acceso a un socket no permitido". Si cambiás el
+    # código, hay que cortar (Ctrl+C) y volver a correr el servidor.
+    app.run(debug=True, use_reloader=False, host=host, port=port)
