@@ -43,15 +43,15 @@ function renderProductos(productos) {
     col.className = "col-md-4 producto";
     col.dataset.categoria = p.categoria;
 
-    const imagenHtml = p.imagen
-      ? `<img src="${p.imagen}" class="card-img-top" alt="${p.nombre}">`
+    const imagenHtml = p.imagen_url
+      ? `<img src="${API_BASE_URL}${p.imagen_url}" class="card-img-top" alt="${escaparHtml(p.nombre)}">`
       : `<div class="sin-imagen">Sin imagen</div>`;
 
     col.innerHTML = `
       <div class="card producto-card">
         ${imagenHtml}
         <div class="card-body text-center">
-          <h5>${p.nombre}</h5>
+          <h5>${escaparHtml(p.nombre)}</h5>
           <p class="precio">$${p.precio}</p>
           <p class="stock-label">${p.stock > 0 ? "Stock: " + p.stock : "SIN STOCK"}</p>
           <button class="btn btn-outline-dark" onclick="verProducto(${p.id})">Ver</button>
@@ -139,7 +139,7 @@ function renderCarrito() {
     const li = document.createElement("li");
     li.className = "d-flex justify-content-between align-items-center";
     li.innerHTML = `
-      <span>${item.nombre} x${item.cantidad} - $${item.precio * item.cantidad}</span>
+      <span>${escaparHtml(item.nombre)} x${item.cantidad} - $${item.precio * item.cantidad}</span>
       <button class="btn btn-sm btn-outline-danger ms-2" onclick="quitarDelCarrito(${item.producto_id})">x</button>
     `;
     lista.appendChild(li);

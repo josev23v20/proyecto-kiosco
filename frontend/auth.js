@@ -47,8 +47,8 @@ function mostrarBarraUsuario(usuario) {
   el.innerHTML = `
     <div class="alert alert-dark shadow-sm d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
       <div>
-        <strong>Cuenta activa:</strong> ${usuario.nombre}
-        <span class="text-muted">(${usuario.curso})</span>
+        <strong>Cuenta activa:</strong> ${escaparHtml(usuario.nombre)}
+        <span class="text-muted">(${escaparHtml(usuario.curso)})</span>
       </div>
       <div>
         ${usuario.rol === "admin" ? '<a href="admin.html" class="btn btn-outline-light btn-sm me-2">Panel admin</a>' : ""}
