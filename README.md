@@ -99,10 +99,15 @@ git --version
 
 ### 1. Descargar el proyecto
 
+- en la terminal:
 ```powershell
-git clone https://github.com/TU_USUARIO/proyecto-kiosco.git
+git clone https://github.com/josev23v20/proyecto-kiosco.git
+
 cd proyecto-kiosco
+
+code . (o abrirlo desde vscode)
 ```
+
 
 ### 2. Crear la base de datos
 
@@ -120,6 +125,7 @@ No hace falta crear tablas: el backend las crea solo.
 
 Recomendado: usar un entorno virtual para no mezclar librerías con otros proyectos.
 
+- en la terminal:
 ```powershell
 python -m venv venv
 venv\Scripts\Activate.ps1
@@ -134,6 +140,7 @@ pip install -r backend\requirements.txt
 
 Copiá la plantilla y editala:
 
+- en la terminal:
 ```powershell
 copy backend\.env.example backend\.env
 notepad backend\.env
@@ -156,6 +163,7 @@ FRONTEND_ORIGIN=*
 
 ### 5. Cargar los productos iniciales
 
+- en la terminal:
 ```powershell
 python backend\seed.py
 ```
@@ -184,6 +192,7 @@ El servidor no se recarga solo: si cambiás código del backend, cortalo con `Ct
 
 Abrí **otra** terminal en la carpeta del proyecto:
 
+- en la terminal:
 ```powershell
 cd frontend
 python -m http.server 54400 --bind 127.0.0.1
