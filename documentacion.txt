@@ -1,0 +1,622 @@
+==============================================================
+  TIENDITA BUEN PRECIO - DOCUMENTACIÓN TÉCNICA
+==============================================================
+
+Este documento explica cómo está hecho el proyecto por dentro.
+Para instalarlo y correrlo, ver README.md. Para una explicación
+general, ver proyecto.txt.
+
+
+ÍNDICE
+--------------------------------------------------------------
+  1. Stack y arquitectura
+  2. Archivos y responsabilidades
+  3. Configuración y arranque del backend
+  4. Base de datos
+  5. Autenticación y permisos
+  6. API (detalle de cada ruta)
+  7. Flujo de compra y control de stock
+  8. Imágenes de productos
+  9. Frontend
+ 10. Seguridad: qué está hecho y qué no
+ 11. Decisiones de diseño
+ 12. Deploy en Render
+ 13. Problemas de entorno ya encontrados
+ 14. Limitaciones conocidas y pendientes
+
+
+1. STACK Y ARQUITECTURA
+--------------------------------------------------------------
+  Frontend      HTML, CSS, JavaScript puro, Bootstrap 5.3 (CDN)
+  Backend       Python + Flask 3
+  Base de datos PostgreSQL
+  ORM           SQLAlchemy 2 vía Flask-SQLAlchemy
+  Driver        psycopg2-binary
+  Otros         Flask-Cors, python-dotenv, itsdangerous,
+                Werkzeug (hash de contraseñas), gunicorn (prod)
+
+Es una arquitectura cliente-servidor con API REST:
+
+  Navegador (HTML/CSS/JS estáticos)
+        |  fetch() con JSON o multipart/form-data
+        v
+  Flask (rutas /api/...)
+        |  SQLAlchemy
+        v
+  PostgreSQL
+
+El frontend y el backend son proyectos independientes: el
+frontend son archivos estáticos que pueden alojarse en cualquier
+servidor de archivos, y se comunican solo por HTTP. Por eso el
+backend habilita CORS y el frontend guarda la URL del backend
+en config.js.
+
+
+2. ARCHIVOS Y RESPONSABILIDADES
+--------------------------------------------------------------
+backend/
+  app.py            Configuración, rutas, login, pedidos, admin.
+  models.py         Modelos SQLAlchemy (Usuario, Producto,
+                    Pedido, PedidoItem).
+  seed.py           Inserta los 20 productos iniciales (17 de
+                    tienda y 3 de Mercado Negro). Es idempotente.
+  requirements.txt  Dependencias (sin versiones fijas).
+  .env.example      Plantilla de variables de entorno.
+  .env              Configuración real (ignorado por git).
+
+frontend/
+  login.html        Inicio de sesión y registro (misma pantalla).
+  index.html        Tienda.
+  mercado.html      Mercado Negro (tema oscuro propio).
+  admin.html        Panel de administración.
+  config.js         Constante API_BASE_URL.
+  api.js            apiFetch() y escaparHtml().
+  auth.js           Sesión, protección de páginas, login y registro.
+  tienda.js         Productos, carrito, compra (index y mercado).
+  admin.js          Lógica del panel admin.
+  styles.css        Estilos de tienda y panel.
+  login.css         Estilos del login (#login_Box).
+
+Los archivos viejos index.txt, login.txt y javascrip.js, y las
+carpetas de imágenes locales, ya no se usan.
+
+
+3. CONFIGURACIÓN Y ARRANQUE DEL BACKEND
+--------------------------------------------------------------
+Variables de entorno (se leen de backend/.env con python-dotenv;
+en Render se cargan desde el panel):
+
+  DATABASE_URL     Obligatoria. Si falta, el backend se detiene
+                   con un mensaje claro. Se acepta el prefijo
+                   "postgres://" (Render) o "postgresql://"; el
+                   código lo reescribe a "postgresql+psycopg2://"
+                   para forzar el driver psycopg2.
+  SECRET_KEY       Firma los tokens. Tiene un valor por defecto
+                   inseguro solo para desarrollo: en producción
+                   hay que definirla. Cambiarla invalida todas las
+                   sesiones.
+  ADMIN_PASSWORD   Contraseña del usuario "admin".
+  FRONTEND_ORIGIN  Origen permitido por CORS. Por defecto "*".
+  PORT             Puerto en local. Por defecto 5000.
+  HOST             Interfaz en local. Por defecto 127.0.0.1.
+
+Secuencia al importar app.py (también ocurre bajo gunicorn y al
+importar desde seed.py):
+
+  1. load_dotenv()
+  2. Lee y normaliza DATABASE_URL.
+  3. Configuración de Flask: URI de base, SECRET_KEY y
+     MAX_CONTENT_LENGTH = 3 MB.
+  4. CORS solo para rutas /api/*.
+  5. db.init_app(app) y creación del serializador de tokens.
+  6. Dentro de app_context: db.create_all() y asegurar_admin().
+  7. Registro de rutas.
+
+El bloque if __name__ == "__main__" solo se usa en local:
+app.run(debug=True, use_reloader=False, host, port). Bajo
+gunicorn ese bloque no se ejecuta.
+
+asegurar_admin():
+  - Si no hay ADMIN_PASSWORD, avisa por consola y no hace nada.
+  - Si el usuario "admin" no existe, lo crea con rol "admin" y
+    curso "Administración".
+  - Si existe, fuerza rol "admin" y, si la contraseña del .env
+    no coincide con el hash guardado, lo actualiza. Así cambiar
+    el .env y reiniciar cambia la contraseña.
+  - Ante un error (por ejemplo, dos workers de gunicorn creándolo
+    a la vez) hace rollback y avisa, sin romper el arranque.
+
+Constantes de negocio en app.py:
+  PEDIDO_MINIMO = 2000
+  CATEGORIAS    = galleta, bebida, golosina, snack
+  ESTADOS       = pendiente, entregado, cancelado
+  MAX_IMAGEN    = 2 MB
+  TOKEN_MAX_AGE = 7 días
+
+
+4. BASE DE DATOS
+--------------------------------------------------------------
+Las tablas las crea db.create_all(). Importante: create_all solo
+crea tablas que NO existen; no agrega columnas a tablas ya
+creadas. Si se cambia un modelo hay que migrar a mano o usar
+Flask-Migrate (pendiente).
+
+Tabla usuarios
+  id             entero, clave primaria
+  nombre         texto(60), único, obligatorio
+  password_hash  texto(255), obligatorio
+  curso          texto(40), obligatorio
+  rol            texto(10), "usuario" (por defecto) o "admin"
+  creado_en      fecha y hora (UTC)
+
+Tabla productos
+  id             entero, clave primaria
+  nombre         texto(80), obligatorio
+  categoria      texto(20): galleta, bebida, golosina o snack
+  precio         entero (pesos, sin decimales)
+  stock          entero, por defecto 0
+  mercado_negro  booleano, por defecto falso
+  activo         booleano, por defecto verdadero
+  imagen_datos   bytea, opcional (los bytes de la imagen)
+  imagen_tipo    texto(30), opcional: image/png, image/jpeg
+                 o image/webp
+  imagen_version entero, sube en cada cambio de imagen
+
+Tabla pedidos
+  id             entero, clave primaria
+  codigo         texto(20), único (formato PED-12345)
+  usuario_id     clave foránea a usuarios.id
+  total          entero
+  estado         texto(15): pendiente (por defecto), entregado
+                 o cancelado
+  observaciones  texto(200), opcional. RESERVADA para el futuro
+                 horario de retiro; hoy no se usa.
+  creado_en      fecha y hora (UTC)
+
+Tabla pedido_items
+  id               entero, clave primaria
+  pedido_id        clave foránea a pedidos.id
+  producto_id      clave foránea a productos.id
+  cantidad         entero
+  precio_unitario  entero. Es el precio AL MOMENTO de la compra,
+                   así el historial no cambia si luego se
+                   modifica el precio del producto.
+
+Relaciones
+  Usuario 1 --- N Pedido
+  Pedido  1 --- N PedidoItem   (cascade: al borrar un pedido se
+                                borran sus items)
+  PedidoItem N --- 1 Producto
+
+El Mercado Negro NO tiene tablas propias: son filas de la misma
+tabla productos con mercado_negro = verdadero.
+
+Las columnas categoria, rol y estado son texto y se validan en
+el código (no hay ENUM ni restricciones CHECK en la base).
+
+La columna imagen_datos está marcada como "deferred" en
+SQLAlchemy: al listar productos NO se leen los bytes, solo
+cuando se pide la imagen. Sin esto, cada listado cargaría todas
+las imágenes desde la base.
+
+
+5. AUTENTICACIÓN Y PERMISOS
+--------------------------------------------------------------
+Contraseñas
+  Se guardan con generate_password_hash (Werkzeug) y se verifican
+  con check_password_hash. La contraseña mínima es de 4
+  caracteres.
+
+Token de sesión
+  - Se genera con URLSafeTimedSerializer (itsdangerous), firmado
+    con SECRET_KEY, con el contenido {"usuario_id": N}.
+  - Vence a los 7 días.
+  - No se guarda en la base: es "stateless". Esto implica que no
+    se puede revocar un token individual (ver sección 14).
+  - El cliente lo envía en el header:
+        Authorization: Bearer <token>
+  - Se eligió header en vez de cookie porque frontend y backend
+    estarán en dominios distintos.
+
+Decoradores en app.py
+  @requiere_login   Lee el header, valida el token, carga el
+                    usuario con db.session.get y lo deja en
+                    flask.g.usuario. Si falla: 401.
+  @requiere_admin   Debe ir DESPUÉS de @requiere_login. Si
+                    g.usuario.rol no es "admin": 403.
+
+Reglas de registro
+  - Campos obligatorios: nombre, password, curso.
+  - El nombre "admin" (en cualquier combinación de mayúsculas)
+    está reservado.
+  - Máximos: nombre 60, curso 40.
+  - Los usuarios nuevos siempre tienen rol "usuario".
+
+Importante: la protección de páginas del frontend
+(protegerPagina) es solo comodidad de uso. La seguridad real
+está en el backend, que verifica el token y el rol en cada ruta.
+
+
+6. API (DETALLE DE CADA RUTA)
+--------------------------------------------------------------
+Todas las respuestas son JSON. Los errores tienen la forma:
+    {"error": "mensaje legible"}
+
+--- Públicas ---
+
+GET /
+  Texto de prueba: "El servidor del kiosco está funcionando."
+
+POST /api/registro
+  Body JSON: {nombre, password, curso}
+  201: {token, usuario}
+  400: campos vacíos, nombre o curso demasiado largos,
+       contraseña de menos de 4 caracteres.
+  409: nombre reservado o usuario ya existente.
+
+POST /api/login
+  Body JSON: {nombre, password}
+  200: {token, usuario}
+  400: campos vacíos.
+  401: usuario o contraseña incorrectos (mismo mensaje para
+       ambos casos, a propósito).
+
+GET /api/productos?mercado_negro=0|1
+  Devuelve solo productos activos, ordenados por id.
+  Con mercado_negro=1 lista el Mercado Negro; con cualquier
+  otro valor, la tienda.
+  200: lista de {id, nombre, categoria, precio, stock,
+       mercado_negro, imagen_url}. imagen_url es una ruta
+       relativa (/api/productos/<id>/imagen?v=<n>) o null.
+
+GET /api/productos/<id>/imagen
+  200: los bytes de la imagen con su tipo MIME.
+  Cache-Control: public, max-age=31536000, immutable
+  404: el producto no existe o no tiene imagen.
+
+--- Requieren sesión ---
+
+GET /api/me
+  200: {id, nombre, curso, rol}.
+
+POST /api/pedido
+  Body JSON: {items: [{producto_id, cantidad}, ...]}
+  201: el pedido: {id, codigo, usuario, curso, total, estado,
+       creado_en, items: [{producto_id, nombre, cantidad,
+       precio_unitario}]}
+  400: carrito vacío, datos inválidos, cantidad <= 0, productos
+       no disponibles, o total menor a $2000.
+  409: sin stock suficiente de algún producto.
+
+GET /api/mis-pedidos
+  200: pedidos del usuario actual, del más nuevo al más viejo.
+  (Todavía no tiene pantalla en el frontend.)
+
+--- Solo admin (403 si no lo es) ---
+
+GET /api/admin/pedidos
+  200: todos los pedidos, del más nuevo al más viejo.
+
+POST /api/admin/pedidos/<id>/estado
+  Body JSON: {estado}   (pendiente, entregado o cancelado)
+  200: el pedido actualizado.
+  400: estado inválido.   404: pedido inexistente.
+
+POST /api/admin/productos
+  Body multipart/form-data:
+    nombre         1 a 80 caracteres
+    categoria      galleta, bebida, golosina o snack
+    precio         entero >= 0
+    stock          entero >= 0 (por defecto 0)
+    mercado_negro  "1", "true" u "on" para verdadero
+    imagen         archivo, opcional
+  201: el producto creado.
+  400: datos inválidos o imagen no válida.
+
+POST /api/admin/productos/<id>/stock
+  Body JSON: {stock}   (entero >= 0; reemplaza el valor actual)
+  200: el producto actualizado.
+  400: valor inválido o negativo.   404: producto inexistente.
+
+POST /api/admin/productos/<id>/imagen
+  Body multipart/form-data: imagen (obligatoria)
+  200: el producto con imagen_url nueva (versión + 1).
+  400: sin archivo o imagen no válida.   404: producto inexistente.
+
+Error global 413: si el cuerpo de una petición supera 3 MB,
+Flask lo corta y el backend responde JSON con el mensaje de
+imagen demasiado grande.
+
+
+7. FLUJO DE COMPRA Y CONTROL DE STOCK
+--------------------------------------------------------------
+Lado del navegador (tienda.js)
+  1. El carrito vive en memoria: un arreglo de
+     {producto_id, nombre, precio, cantidad}. Se pierde al
+     recargar la página.
+  2. "Agregar" comprueba contra el stock mostrado que no se
+     supere lo disponible.
+  3. "Comprar" verifica carrito no vacío y mínimo $2000, y envía
+     SOLO {producto_id, cantidad} de cada ítem. El precio no se
+     manda: el servidor lo conoce.
+  4. Si sale bien: muestra "Pedido realizado: PED-xxxxx", vacía
+     el carrito y recarga los productos para ver el stock real.
+
+Lado del servidor (crear_pedido en app.py), todo en una
+transacción:
+  1. Valida el formato de items y suma cantidades si un mismo
+     producto llega repetido.
+  2. Lee los productos con SELECT ... FOR UPDATE, ordenados por
+     id. Esto bloquea esas filas hasta el commit: si dos
+     personas compran el último stock a la vez, la segunda
+     espera y luego ve el stock real. El orden por id evita
+     bloqueos cruzados (deadlocks).
+  3. Verifica que existan y estén activos.
+  4. Verifica stock suficiente y calcula el total con los
+     precios de la base.
+  5. Verifica el mínimo de $2000.
+  6. Crea el pedido con un código "PED-" + 5 dígitos al azar
+     (se reintenta si ya existe).
+  7. Descuenta el stock y crea los PedidoItem con el
+     precio_unitario del momento.
+  8. Commit. Cualquier falla anterior hace rollback y libera
+     los bloqueos.
+
+El stock se descuenta al CONFIRMAR el pedido, no al agregar al
+carrito. (La primera versión lo hacía al agregar y se perdía
+stock cuando alguien cerraba la página.)
+
+Nota: si un pedido se pasa a "cancelado", el stock NO se devuelve
+todavía (pendiente).
+
+
+8. IMÁGENES DE PRODUCTOS
+--------------------------------------------------------------
+Dónde se guardan: en la columna imagen_datos (bytea) de la tabla
+productos, con su tipo en imagen_tipo.
+
+Por qué en la base y no en una carpeta: en el plan gratuito de
+Render el disco del servidor se borra en cada reinicio o deploy.
+Cualquier archivo guardado en carpetas se perdería. La base de
+datos persiste.
+
+Validaciones
+  Navegador (admin.js): tipo PNG/JPEG/WEBP y máximo 2 MB. Es solo
+  una ayuda para el usuario.
+  Servidor (app.py, leer_imagen_del_request):
+    - Archivo no vacío y máximo 2 MB.
+    - El formato se detecta por los primeros bytes del archivo
+      (firma), no por la extensión ni por el tipo que declare el
+      navegador:
+        PNG    empieza con 89 50 4E 47 0D 0A 1A 0A
+        JPEG   empieza con FF D8 FF
+        WEBP   "RIFF" y "WEBP" en las posiciones 0 y 8
+    - Tope global de 3 MB por petición (MAX_CONTENT_LENGTH).
+
+Entrega: GET /api/productos/<id>/imagen. La URL incluye
+?v=<imagen_version>; al cambiar la imagen, la versión sube y la
+URL cambia, por lo que el navegador puede cachearla "para
+siempre" sin mostrar nunca una imagen vieja.
+
+Costo: las imágenes ocupan espacio de la base. Con muchos
+productos o imágenes pesadas conviene pasar a un servicio de
+archivos (por ejemplo Cloudinary o S3).
+
+
+9. FRONTEND
+--------------------------------------------------------------
+Orden de carga de scripts
+  index.html y mercado.html:
+    config.js -> api.js -> auth.js -> (script en línea con
+    const MERCADO_NEGRO = false/true) -> tienda.js ->
+    Bootstrap bundle.
+  login.html: config.js, api.js, auth.js, llamada a
+    protegerPagina(), Bootstrap.
+  admin.html: config.js, api.js, auth.js, admin.js, Bootstrap.
+
+La constante MERCADO_NEGRO debe definirse ANTES de tienda.js:
+con ella, el mismo archivo sirve para la tienda y para el
+Mercado Negro (pide /api/productos?mercado_negro=1 o =0).
+
+config.js
+  API_BASE_URL: dirección del backend. Hay que cambiarla al
+  desplegar.
+
+api.js
+  apiFetch(ruta, opciones): antepone API_BASE_URL, agrega el
+  header Authorization si hay token, pone Content-Type JSON
+  salvo que el body sea FormData (para subir archivos el
+  navegador define el tipo solo), convierte errores en
+  Error(mensaje) usando data.error, y avisa si no hay
+  conexión con el backend.
+  escaparHtml(texto): convierte & < > " ' en entidades HTML.
+
+auth.js
+  guardarSesion / obtenerUsuario / cerrarSesion: usan
+    localStorage con dos claves: "token" y "usuario" (JSON con
+    nombre, curso y rol, para mostrar la barra superior).
+  protegerPagina(): sin sesión fuera de login redirige a
+    login.html; con sesión dentro de login redirige a
+    index.html. Devuelve el usuario o null.
+  mostrarBarraUsuario(usuario): barra "Cuenta activa" con botón
+    de cerrar sesión y, si es admin, enlace al panel.
+  login() y registrarse(): llaman a /api/login y /api/registro,
+    guardan la sesión y redirigen a index.html. Para iniciar
+    sesión se piden solo nombre y contraseña; el curso solo se
+    usa al registrarse.
+
+tienda.js
+  Estado global: usuarioActual, productosCache, carrito,
+  productoActualId.
+  Al cargar la página (DOMContentLoaded): protegerPagina ->
+    mostrarBarraUsuario -> muestra #contenido (que arranca
+    oculto para que no se vea un destello antes de redirigir)
+    -> cargarProductos.
+  Funciones: cargarProductos, renderProductos, verProducto
+    (modal), agregarDesdeModal, agregar, quitarDelCarrito,
+    renderCarrito, finalizarCompra, filtrarCategoria,
+    filtrarProductos.
+  Si el usuario es admin, cada tarjeta muestra un botón
+  "Reponer" (agregarBotonesReponer / reponerProducto) que
+  identifica el producto por su nombre.
+
+admin.js
+  Verifica sesión y rol "admin" (si no, vuelve a index.html).
+  Carga pedidos y productos (tienda + Mercado Negro).
+  Usa delegación de eventos con atributos data-* en vez de meter
+  nombres dentro de onclick.
+  Funciones: cargarPedidos / renderPedidos /
+    cambiarEstadoPedido, cargarProductos / renderProductos,
+    reponerStock, validarImagen, previsualizarImagen,
+    elegirImagen / subirImagenExistente, crearProducto.
+  El alta de producto manda FormData (multipart) con la
+  imagen opcional.
+
+Mercado Negro oculto: en index.html hay un enlace de pie de
+página con el texto "v1.4.2" (clase .footer-secreto, casi
+transparente) que lleva a mercado.html y reproduce un sonido.
+
+Estilos
+  styles.css es compartido. Clases clave: .tema-claro y
+  .tema-oscuro, .carrito-fijo (carrito flotante, pasa a bloque
+  normal en pantallas chicas), .producto-card, .sin-imagen.
+  mercado.html agrega su tema oscuro con una etiqueta <style>.
+  login.css estiliza todo bajo #login_Box.
+
+
+10. SEGURIDAD: QUÉ ESTÁ HECHO Y QUÉ NO
+--------------------------------------------------------------
+Hecho
+  - Contraseñas con hash.
+  - Tokens firmados con vencimiento.
+  - Permisos verificados en el backend (login y rol).
+  - Precios, stock y mínimo validados en el servidor.
+  - Bloqueo de filas contra sobreventa (concurrencia).
+  - Escape de HTML (escaparHtml) en todo texto que viene de
+    usuarios o productos antes de insertarlo con innerHTML.
+    Sin esto, un alumno podría registrarse con un nombre con
+    código y ejecutarlo en el navegador del admin.
+  - Imágenes validadas por contenido, con límite de tamaño.
+  - Nombre "admin" reservado; mismo mensaje de error en login
+    para usuario inexistente y contraseña incorrecta.
+  - Secretos en variables de entorno; .env en .gitignore.
+
+No hecho todavía
+  - Límite de intentos de login (fuerza bruta).
+  - Revocar tokens o cerrar sesión en el servidor.
+  - Contraseñas más exigentes (hoy el mínimo es 4 caracteres).
+  - El token está en localStorage: si hubiera una falla XSS
+    podría robarse. El escape de HTML reduce ese riesgo.
+  - Recuperación de contraseña.
+  - CORS abierto ("*") por defecto: en producción conviene
+    fijar FRONTEND_ORIGIN.
+  - HTTPS: Render lo da en producción; en local se usa HTTP.
+
+
+11. DECISIONES DE DISEÑO
+--------------------------------------------------------------
+  - Mercado Negro en la misma tabla (columna mercado_negro):
+    funciona igual que la tienda, solo cambia el filtro. Un
+    solo código sirve para ambas páginas.
+  - Token en header en vez de cookie: evita problemas de
+    cookies entre dominios distintos y no requiere protección
+    CSRF.
+  - Token sin estado (sin tabla de sesiones): más simple; el
+    costo es no poder revocarlo.
+  - Stock al confirmar el pedido, no al agregar al carrito.
+  - Imágenes en la base por el disco efímero de Render.
+  - Precio guardado en cada item del pedido (historial fiel).
+  - Admin definido por variable de entorno y no por registro:
+    no hay forma de volverse admin desde la web.
+  - Pago simulado en esta etapa: el pedido queda "pendiente" y
+    se cobra en persona al retirar.
+
+
+12. DEPLOY EN RENDER (PLAN)
+--------------------------------------------------------------
+Todavía no está desplegado. Pasos previstos:
+
+  1. Crear una base PostgreSQL en Render y copiar su Internal
+     Database URL.
+  2. Crear un Web Service desde el repositorio de GitHub:
+       Build command:  pip install -r backend/requirements.txt
+       Start command:  gunicorn --chdir backend app:app
+     Variables: DATABASE_URL, SECRET_KEY (larga y aleatoria),
+     ADMIN_PASSWORD, FRONTEND_ORIGIN.
+  3. Las tablas y el usuario admin se crean solos al arrancar.
+     Para cargar productos, correr seed.py una vez (por ejemplo
+     desde la consola del servicio), o cargarlos desde el panel.
+  4. Publicar la carpeta frontend como sitio estático (Render
+     Static Site, GitHub Pages o Vercel) con API_BASE_URL
+     apuntando a la URL pública del backend.
+  5. Poner la URL real del frontend en FRONTEND_ORIGIN (sin
+     barra final).
+
+Antes de elegir el plan gratuito, revisar sus condiciones en el
+sitio de Render: suspensión del servicio por inactividad (la
+primera petición tarda) y vencimiento o límite de la base
+gratuita.
+
+
+13. PROBLEMAS DE ENTORNO YA ENCONTRADOS
+--------------------------------------------------------------
+  - "No module named 'psycopg'": SQLAlchemy 2.1 usa por defecto
+    el driver psycopg (versión 3) con "postgresql://". Se
+    soluciona forzando "postgresql+psycopg2://", que ya hace
+    app.py.
+
+  - "Intento de acceso a un socket no permitido por sus
+    permisos de acceso" (error 10013 de Windows): ese puerto
+    está reservado o bloqueado. En una PC fallaron 5000, 5001 y
+    8080 y funcionó 54321. Soluciones: usar un puerto alto
+    (PORT en .env y el mismo en config.js). Para ver los
+    puertos reservados:
+        netsh interface ipv4 show excludedportrange protocol=tcp
+    El reloader de Flask está desactivado en app.run por este
+    tipo de problemas: tras cambiar código hay que reiniciar a
+    mano.
+
+  - ERR_ADDRESS_INVALID en el navegador: se abrió
+    http://[::]:puerto. Esa es la dirección en la que escucha
+    el servidor, no una para visitar. Usar 127.0.0.1.
+
+  - Los .html no funcionan abiertos con doble clic (file://):
+    las llamadas al backend se bloquean. Hay que servir el
+    frontend con python -m http.server.
+
+
+14. LIMITACIONES CONOCIDAS Y PENDIENTES
+--------------------------------------------------------------
+Pendientes de negocio (acordados)
+  - Horario o turno de retiro (usar la columna observaciones).
+  - Pagos reales con Mercado Pago.
+  - Notificaciones de pedido nuevo y cambio de estado.
+  - Deploy.
+
+Pendientes técnicos
+  - Devolver el stock al cancelar un pedido.
+  - Pantalla "mis pedidos" (el endpoint ya existe).
+  - Editar nombre, precio y categoría de un producto, y
+    desactivarlo o borrarlo (la columna activo existe, sin
+    interfaz).
+  - Guardar el carrito en el navegador para que sobreviva a una
+    recarga.
+  - Si el token vence, las llamadas dan 401 pero el frontend no
+    cierra la sesión solo: habría que detectar el 401 en
+    apiFetch y llamar a cerrarSesion().
+  - Migraciones de base con Flask-Migrate (hoy solo create_all).
+  - Límite de intentos de login.
+  - Tests automáticos.
+  - /api/admin/pedidos devuelve todos los pedidos sin paginar y
+    sin filtros, y carga los items de cada uno por separado
+    (puede ser lento con muchos pedidos).
+  - PEDIDO_MINIMO está duplicado (backend y tienda.js). El
+    backend es el que manda; el del frontend es solo para
+    avisar antes.
+  - En la tienda el botón "Reponer" identifica el producto por
+    nombre: si hubiera dos con el mismo nombre en una misma
+    sección, podría tocar el equivocado.
+  - Los avisos usan alert() del navegador.
+  - Los códigos PED- tienen 5 dígitos (90.000 combinaciones):
+    alcanza para este uso, pero conviene ampliar si el
+    volumen crece.

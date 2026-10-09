@@ -1,5 +1,4 @@
 
-
 * {
   box-sizing: border-box;
 }
@@ -195,4 +194,30 @@ input {
     width: 100%;
     margin-top: 1rem;
   }
+}
+
+.sin-imagen {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+#lista-carrito li {
+  font-size: 0.9rem;
+  padding: 0.15rem 0;
+}
+
+/* Acceso discreto al Mercado Negro: se ve como un número de versión cualquiera */
+.footer-secreto {
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.footer-secreto:hover {
+  color: #94a3b8;
 }

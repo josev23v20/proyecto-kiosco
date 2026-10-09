@@ -1,0 +1,230 @@
+==============================================================
+  TIENDITA BUEN PRECIO - EXPLICACIÓN DEL PROYECTO
+  (para estudiantes)
+==============================================================
+
+
+1. QUÉ ES ESTE PROYECTO
+--------------------------------------------------------------
+Es el kiosco de la escuela, pero en una página web.
+
+Un alumno entra, se crea una cuenta, elige lo que quiere
+comprar (galletitas, alfajores, bebidas...), arma un carrito
+y hace el pedido. El kiosquero ve los pedidos en un panel y
+los va marcando como entregados.
+
+Todavía NO se cobra por la web: el pago se hace en persona
+cuando el alumno retira. Lo demás (cuentas, productos, stock,
+pedidos) funciona de verdad y queda guardado.
+
+Además hay una sección escondida, el "Mercado Negro", con
+productos que la escuela no deja vender, como café. Se entra
+por un link casi invisible al final de la tienda.
+
+
+2. LA IDEA GENERAL: UN RESTAURANTE
+--------------------------------------------------------------
+Casi todas las páginas web funcionan como un restaurante:
+
+  EL SALÓN Y EL MENÚ   = el FRONTEND
+                         Lo que ve y toca el cliente: botones,
+                         fotos, carrito. Corre en el navegador.
+
+  EL MOZO Y LA COCINA  = el BACKEND
+                         Recibe los pedidos, decide si se
+                         pueden hacer y los prepara. Corre en
+                         un servidor.
+
+  EL DEPÓSITO          = la BASE DE DATOS
+                         Donde se guarda todo lo importante:
+                         usuarios, productos, stock, pedidos.
+
+El cliente nunca entra al depósito. Le pide cosas al mozo, y el
+mozo (el backend) revisa si está permitido y va a buscarlas.
+
+
+3. LAS TRES PARTES DE ESTE PROYECTO
+--------------------------------------------------------------
+
+   NAVEGADOR (frontend)        SERVIDOR (backend)       BASE DE DATOS
+  +--------------------+      +-----------------+      +--------------+
+  |  HTML + CSS + JS   | ---> |  Python + Flask | ---> | PostgreSQL   |
+  |  lo que se ve      | <--- |  las reglas     | <--- | los datos    |
+  +--------------------+      +-----------------+      +--------------+
+        pide datos              consulta y guarda
+
+FRONTEND - carpeta "frontend"
+  - HTML: la estructura de la página (títulos, botones).
+  - CSS: el aspecto (colores, tamaños). Usamos Bootstrap, un
+    conjunto de estilos ya hechos.
+  - JavaScript: lo que hace que la página "reaccione": agregar
+    al carrito, filtrar, pedirle los productos al backend.
+
+BACKEND - carpeta "backend"
+  - Python con Flask, una herramienta para armar servidores.
+  - Contiene las REGLAS: quién puede entrar, qué se puede
+    comprar, cuánto stock queda.
+
+BASE DE DATOS
+  - PostgreSQL guarda la información en tablas, como planillas
+    de Excel muy ordenadas.
+  - Para hablar con ella desde Python usamos SQLAlchemy, que
+    permite trabajar con "clases" de Python en vez de escribir
+    consultas SQL a mano.
+
+
+4. QUÉ PASA CUANDO ALGUIEN HACE UNA COMPRA
+--------------------------------------------------------------
+  1. El alumno abre la web e inicia sesión.
+     El backend comprueba su contraseña y le entrega un
+     "token" (una especie de pulsera de entrada).
+
+  2. La página le pide al backend la lista de productos.
+     El backend los lee de la base y los devuelve.
+
+  3. El alumno agrega cosas al carrito.
+     Esto pasa solo en su navegador, todavía no se guarda nada.
+
+  4. Toca "Comprar".
+     La página manda al backend el carrito y el token.
+
+  5. El backend revisa:
+       - que el token sea válido (¿quién sos?)
+       - que haya stock de cada producto
+       - que el total llegue al mínimo de $2000
+     Los precios los toma de la base, NUNCA de lo que mande
+     el navegador (alguien podría intentar cambiarlos).
+
+  6. Si todo está bien, descuenta el stock, guarda el pedido
+     y responde con un código, por ejemplo PED-48213.
+
+  7. El kiosquero ve el pedido en su panel y, cuando lo
+     entrega, lo marca como "entregado".
+
+
+5. FUNCIONALIDADES
+--------------------------------------------------------------
+Para todos:
+  - Crear cuenta (nombre, contraseña y curso) e iniciar sesión.
+  - Ver productos por categoría: galletas, bebidas, golosinas
+    y snacks. Buscar y filtrar.
+  - Carrito de compras con total.
+  - Hacer un pedido (mínimo $2000) y recibir un código.
+  - Acceder al Mercado Negro.
+
+Solo para el administrador (el kiosquero):
+  - Ver todos los pedidos y cambiar su estado.
+  - Ver y modificar el stock de cada producto.
+  - Agregar productos nuevos con su foto.
+  - Cambiar la foto de un producto.
+
+
+6. USUARIOS Y PERMISOS
+--------------------------------------------------------------
+Hay dos tipos de cuenta:
+
+  USUARIO: cualquier alumno o miembro del personal. Puede
+           mirar y comprar.
+
+  ADMIN:   la cuenta del kiosquero. Se llama "admin" y su
+           contraseña se define en un archivo de
+           configuración (.env) que no se comparte.
+
+Importante: el permiso lo controla el BACKEND, no la página.
+Aunque un alumno encontrara el panel de admin, el servidor le
+diría "no tenés permiso". Nunca hay que confiar en lo que
+dice el navegador, porque cualquiera puede modificarlo.
+
+
+7. IDEAS DE SEGURIDAD QUE SE APLICAN
+--------------------------------------------------------------
+  - HASH DE CONTRASEÑAS: no guardamos la contraseña, sino una
+    versión "mezclada" que no se puede volver al original. Si
+    alguien viera la base, no vería las contraseñas.
+
+  - TOKEN: tras iniciar sesión, el backend entrega un token
+    firmado. Dura 7 días. En cada pedido el navegador lo
+    muestra para demostrar quién es.
+
+  - VALIDAR EN EL SERVIDOR: precios, stock y permisos se
+    comprueban siempre en el backend.
+
+  - VARIABLES DE ENTORNO: las claves (base de datos, contraseña
+    del admin) viven en un archivo .env que NO se sube a
+    GitHub. Subir una clave a un repositorio público es un
+    error muy común y muy peligroso.
+
+
+8. MAPA DE CARPETAS
+--------------------------------------------------------------
+  proyecto-kiosco/
+    README.md           Cómo instalar y correr el proyecto
+    proyecto.txt        Este archivo
+    documentacion.txt   Detalles técnicos
+
+    backend/            EL SERVIDOR
+      app.py            Las rutas y reglas del servidor
+      models.py         La forma de las tablas de la base
+      seed.py           Carga los productos iniciales
+      requirements.txt  Lista de librerías que usa Python
+      .env              Claves y configuración (secreto)
+
+    frontend/           LO QUE VE EL USUARIO
+      login.html        Entrar y registrarse
+      index.html        La tienda
+      mercado.html      El Mercado Negro
+      admin.html        El panel del kiosquero
+      *.js              El código que da vida a las páginas
+      *.css             Los estilos
+
+
+9. QUÉ SE APRENDE CON ESTE PROYECTO
+--------------------------------------------------------------
+  - Cómo se comunican un frontend y un backend (API y JSON).
+  - Cómo se guardan datos en una base de datos relacional.
+  - Registro, login y permisos de usuario.
+  - Por qué hay que validar todo en el servidor.
+  - Trabajar con variables de entorno y un repositorio de Git.
+  - Cómo se publica una aplicación en internet (deploy).
+
+
+10. QUÉ FALTA
+--------------------------------------------------------------
+Lo más importante que todavía no está hecho:
+  - Pagos reales (por ejemplo, con Mercado Pago).
+  - Elegir el horario de retiro del pedido.
+  - Avisos cuando un pedido cambia de estado.
+  - Publicar la web en internet.
+  - Poder editar y borrar productos desde el panel.
+
+La lista completa está en el README.md.
+
+
+11. IDEAS PARA PRACTICAR
+--------------------------------------------------------------
+  - Agregar una categoría nueva (por ejemplo, "sándwiches").
+  - Mostrar al alumno una pantalla con sus pedidos anteriores.
+  - Cambiar los colores de la tienda en styles.css.
+  - Hacer que el carrito no se pierda al recargar la página.
+  - Agregar un botón para editar el precio de un producto.
+
+
+12. GLOSARIO RÁPIDO
+--------------------------------------------------------------
+  Frontend      Lo que se ve y se usa en el navegador.
+  Backend       El programa del servidor con las reglas.
+  Base de datos Donde se guarda la información de forma
+                permanente.
+  API           Los "mostradores" del backend: direcciones a las
+                que el frontend les hace pedidos.
+  JSON          Formato de texto para intercambiar datos entre
+                frontend y backend.
+  Token         Comprobante firmado que demuestra quién sos.
+  Hash          Versión "mezclada" e irreversible de una
+                contraseña.
+  ORM           Herramienta (SQLAlchemy) para usar la base con
+                clases de Python en vez de SQL.
+  .env          Archivo con claves y configuración que no se
+                sube a GitHub.
+  Deploy        Publicar la aplicación para que se use por
+                internet.
